@@ -25,5 +25,5 @@ app.post("/api/payment/easypaisa/callback", (req, res) => {
   res.status(200).send("Callback received");
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
