@@ -25,5 +25,20 @@ app.post("/api/payment/easypaisa/callback", (req, res) => {
   res.status(200).send("Callback received");
 });
 
+// Root GET API for testing
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head><title>Backend Test</title></head>
+      <body>
+        <h1>Server is running!</h1>
+        <pre>${JSON.stringify({ status: 'ok', message: 'Server is running!' }, null, 2)}</pre>
+      </body>
+    </html>
+  `);
+});
+app.post('/test', (req, res) => res.json({ ok: true }));
+
+
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
