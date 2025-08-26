@@ -24,21 +24,47 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 // JazzCash credentials
-const merchantId = "MC204131";
-const password = "6z1sy50u90";
-const integritySalt = "40tgu93s2v";
-const returnUrl = "https://drawify-backend.vercel.app/api/payment/jazzcash/callback";
+// Use environment variables
+const merchantId = process.env.JAZZCASH_MERCHANT_ID;
+const password = process.env.JAZZCASH_PASSWORD;
+const integritySalt = process.env.JAZZCASH_INTEGRITY_SALT;
+const returnUrl = process.env.JAZZCASH_RETURN_URL;
 
 // Helper function to create secure hash
-function generateSecureHash(data) {
-  const sortedKeys = Object.keys(data).sort();
-  const hashString = sortedKeys.map(k => data[k]).join('&');
+// A correct implementation would look something like this:
+function generateSecureHash(data, integritySalt) {
+  const hashString =
+    (data.pp_TxnType || "") +
+    "&" +
+    (data.pp_ExpiryDateTime || "") +
+    "&" +
+    (data.pp_BillReference || "") +
+    "&" +
+    (data.pp_TxnCurrency || "") +
+    "&" +
+    (data.pp_Language || "") +
+    "&" +
+    (data.pp_Password || "") +
+    "&" +
+    (data.pp_MerchantID || "") +
+    "&" +
+    (data.pp_ReturnURL || "") +
+    "&" +
+    (data.pp_TxnRefNo || "") +
+    "&" +
+    (data.pp_Amount || "") +
+    "&" +
+    (data.pp_Version || "") +
+    "&" +
+    (data.pp_Description || "") +
+    "&" +
+    (data.pp_TxnDateTime || "");
+
   return crypto
     .createHmac("sha256", integritySalt)
     .update(hashString)
     .digest("hex");
 }
-
 
 // Create payment request API
 app.post("/api/payment/jazzcash/create", (req, res) => {
@@ -69,7 +95,9 @@ app.post("/api/payment/jazzcash/create", (req, res) => {
     pp_ReturnURL: returnUrl,
   };
 
-  data.pp_SecureHash = generateSecureHash(data);
+  data.pp_SecureHash = generateSecureHash(data, integritySalt);
+  // Add the password back to the payload sent to the client
+  data.pp_Password = password;
 
   return res.json({
     paymentUrl: "https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/",
