@@ -32,22 +32,26 @@ const returnUrl = "https://drawify-backend.vercel.app/api/payment/jazzcash/callb
 // Helper function to create secure hash
 function generateSecureHash(data) {
   const sortedKeys = Object.keys(data).sort();
-  const hashString = integritySalt + "&" + sortedKeys.map(k => data[k]).join("&");
-  return crypto.createHash("sha256").update(hashString).digest("hex");
+  const hashString = sortedKeys.map(k => data[k]).join('&');
+  return crypto
+    .createHmac("sha256", integritySalt)
+    .update(hashString)
+    .digest("hex");
 }
+
 
 // Create payment request API
 app.post("/api/payment/jazzcash/create", (req, res) => {
-  const { amount, orderId, description } = req.body;
+  const { amount, description } = req.body;
 
-  // Convert amount to paisa format (e.g. 100 PKR -> 10000)
   const amountInPaisa = (amount * 100).toString();
-
   const transactionDateTime = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
   const expiryDateTime = new Date(Date.now() + 60 * 60 * 1000)
     .toISOString()
     .replace(/[-:TZ.]/g, "")
     .slice(0, 14);
+
+  const orderId = "T" + Date.now();
 
   let data = {
     pp_Version: "1.1",
@@ -65,11 +69,10 @@ app.post("/api/payment/jazzcash/create", (req, res) => {
     pp_ReturnURL: returnUrl,
   };
 
-  // Add secure hash
   data.pp_SecureHash = generateSecureHash(data);
 
   return res.json({
-    paymentUrl: "https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform",
+    paymentUrl: "https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/",
     payload: data,
   });
 });
